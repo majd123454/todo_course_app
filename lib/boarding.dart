@@ -1,7 +1,35 @@
 import 'package:flutter/material.dart';
 
-class Boarding extends StatelessWidget {
-  const Boarding({super.key});
+class Boarding extends StatefulWidget {
+  Boarding({super.key});
+
+  @override
+  State<Boarding> createState() => _BoardingState();
+}
+
+class _BoardingState extends State<Boarding> {
+  List<BoardingPage> boardingPages = [
+    BoardingPage(
+      imagePath: 'assets/images/book.png',
+      title:
+          "Plan your tasks to do, that way you’ll stay organized and you won’t skip any",
+    ),
+    BoardingPage(
+      imagePath: 'assets/images/image_22.png',
+      title:
+          "Make a full schedule for the whole week and stay organized and productive all days",
+    ),
+    BoardingPage(
+      imagePath: 'assets/images/image_33.png',
+      title: "create a team task, invite people and manage your work together",
+    ),
+    BoardingPage(
+      imagePath: 'assets/images/image_44.png',
+      title: "You informations are secure with us",
+    ),
+  ];
+
+  int currentPageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -23,30 +51,58 @@ class Boarding extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(child: Image.asset('assets/images/book.png')),
             Expanded(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 70),
-                    child: Text(
-                      "Plan your tasks to do, that way you’ll stay organized and you won’t skip any",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
+              child: PageView.builder(
+                itemCount: boardingPages.length,
+                onPageChanged: (i) {
+                  setState(() {
+                    currentPageIndex = i;
+                  });
+                },
+                itemBuilder: (context, i) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Image.asset(
+                          boardingPages[i].imagePath,
+                          height: 300,
+                          width: 300,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            boardingPages[i].title,
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(boardingPages.length, (int index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Container(
+                      height: 7,
+                      width: index == currentPageIndex ? 36 : 18,
+                      decoration: BoxDecoration(
                         color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 123),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(3, (int index) {
-                      return dotWidget();
-                    }),
-                  ),
-                ],
+                  );
+                }),
               ),
             ),
           ],
@@ -68,4 +124,11 @@ class Boarding extends StatelessWidget {
       ),
     );
   }
+}
+
+class BoardingPage {
+  final String imagePath;
+  final String title;
+
+  BoardingPage({required this.imagePath, required this.title});
 }
