@@ -1,4 +1,7 @@
+import 'package:course_level_one/home_screen.dart';
 import 'package:flutter/material.dart';
+
+bool isOpen = false;
 
 class Boarding extends StatefulWidget {
   Boarding({super.key});
@@ -28,17 +31,35 @@ class _BoardingState extends State<Boarding> {
       title: "You informations are secure with us",
     ),
   ];
-
   int currentPageIndex = 0;
+  PageController pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
-        onPressed: () {},
-        child: Icon(Icons.arrow_forward, color: Colors.black),
+        onPressed: () {
+          if (currentPageIndex == boardingPages.length - 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+            isOpen = true;
+          } else {
+            pageController.nextPage(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
+        },
         shape: CircleBorder(),
+        child: Icon(
+          currentPageIndex == boardingPages.length - 1
+              ? Icons.check
+              : Icons.arrow_forward,
+          color: Colors.black,
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -53,6 +74,7 @@ class _BoardingState extends State<Boarding> {
           children: [
             Expanded(
               child: PageView.builder(
+                controller: pageController,
                 itemCount: boardingPages.length,
                 onPageChanged: (i) {
                   setState(() {

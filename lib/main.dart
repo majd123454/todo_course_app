@@ -1,4 +1,5 @@
 import 'package:course_level_one/boarding.dart';
+import 'package:course_level_one/home_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -8,6 +9,6 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: Boarding());
+    return MaterialApp(home: isOpen ? HomeScreen() : Boarding());
   }
 }
