@@ -1,7 +1,13 @@
 import 'package:course_level_one/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 bool isOpen = false;
+
+void setIsOpen() async {
+  SharedPreferences sh = await SharedPreferences.getInstance();
+  await sh.setBool("boardingComplete", isOpen);
+}
 
 class Boarding extends StatefulWidget {
   Boarding({super.key});
@@ -41,11 +47,12 @@ class _BoardingState extends State<Boarding> {
         backgroundColor: Colors.white,
         onPressed: () {
           if (currentPageIndex == boardingPages.length - 1) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => HomeScreen()),
             );
             isOpen = true;
+            setIsOpen();
           } else {
             pageController.nextPage(
               duration: Duration(milliseconds: 300),
