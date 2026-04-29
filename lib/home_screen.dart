@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
@@ -9,15 +12,38 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<String> tasks = [
-    "Task 1: Buy groceries",
-    "Task 2: Finish homework",
-    "Task 3: Call mom",
-    "Task 4: Clean the house",
-    "Task 5: Pay bills",
-    " Task 6: Exercise",
-    "Task 7: Read a book",
-  ];
+  List<Task> tasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadTasks();
+  }
+
+  Future<void> loadTasks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('tasks');
+    if (data != null) {
+      final List decoded = jsonDecode(data);
+      setState(() {
+        tasks = decoded.map((t) {
+          print(t);
+          final timeParts = (t['time'] as String).split(':');
+          return Task(
+            title: t['title'],
+            description: t['description'],
+            date: DateTime.parse(t['date']),
+            time: TimeOfDay(
+              hour: int.parse(timeParts[0]),
+              minute: int.parse(timeParts[1]),
+            ),
+          );
+        }).toList();
+
+        print(tasks);
+      });
+    }
+  }
 
   bool secure = false;
   TextEditingController controller = TextEditingController();
@@ -72,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           TextField(
                             controller: descController,
                             maxLines: 4,
-                            style: const TextStyle(color: Colors.black),
+                            style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               fillColor: Color(0xff05243E),
                               filled: true,
@@ -90,13 +116,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
-                                    final picked = await showDatePicker(
-                                      context: context,
-                                      initialDate:
-                                          selectedDate ?? DateTime.now(),
-                                      firstDate: DateTime(2000),
-                                      lastDate: DateTime(2100),
-                                    );
+                                    final DateTime? picked =
+                                        await showDatePicker(
+                                          context: context,
+                                          initialDate:
+                                              selectedDate ?? DateTime.now(),
+                                          firstDate: DateTime.now(),
+                                          lastDate: DateTime.now().add(
+                                            const Duration(days: 1000),
+                                          ),
+                                        );
                                     if (picked != null) {
                                       setModalState(() {
                                         selectedDate = picked;
@@ -108,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     selectedDate == null
                                         ? 'Pick Date'
                                         : DateFormat(
-                                            'yyyy-MM-dd',
+                                            'yyyy/MM/dd',
                                           ).format(selectedDate!),
                                   ),
                                   style: ElevatedButton.styleFrom(
@@ -124,11 +153,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
-                                    final pickedTime = await showTimePicker(
-                                      context: context,
-                                      initialTime:
-                                          selectedTime ?? TimeOfDay.now(),
-                                    );
+                                    final TimeOfDay? pickedTime =
+                                        await showTimePicker(
+                                          context: context,
+                                          initialTime:
+                                              selectedTime ?? TimeOfDay.now(),
+                                        );
                                     if (pickedTime != null) {
                                       setModalState(() {
                                         selectedTime = pickedTime;
@@ -178,14 +208,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                         selectedDate != null &&
                                         selectedTime != null) {
                                       setState(() {
-                                        // tasks.add(
-                                        //   Task(
-                                        //     title: titleController.text,
-                                        //     description: descController.text,
-                                        //     date: selectedDate!,
-                                        //     time: selectedTime!,
-                                        //   ),
-                                        // );
+                                        tasks.add(
+                                          Task(
+                                            title: titleController.text,
+                                            description: descController.text,
+                                            date: selectedDate!,
+                                            time: selectedTime!,
+                                          ),
+                                        );
                                       });
                                       // saveTasks(tasks);
                                       Navigator.pop(context);
@@ -302,7 +332,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              IconButton(onPressed: () {}, icon: Icon(Icons.abc)),
               SizedBox(height: 46),
               Text(
                 "Tasks List",
@@ -314,12 +343,59 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: 20),
               Expanded(
-                child: ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    return buildTaskItem(tasks[index]);
-                  },
-                ),
+                child: tasks.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No tasks yet',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemBuilder: (context, index) {
+                          final task = tasks[index];
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        task.title,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '${DateFormat('yyyy-MM-dd').format(task.date)} | ${task.time.format(context)}',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  const Icon(Icons.arrow_forward),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 20),
+                        itemCount: tasks.length,
+                      ),
               ),
             ],
           ),
@@ -328,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget buildTaskItem(String task) {
+  Widget buildTaskItem(Task task) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
@@ -343,12 +419,12 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  task,
+                  task.title,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
                 Text(
-                  "10:00 AM - 11:00 AM",
+                  "${task.time.hour}:${task.time.minute} AM - ${task.time.hour + 1}:${task.time.minute} AM",
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
@@ -360,4 +436,36 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+Future<void> saveTasks(List<Task> tasks) async {
+  final prefs = await SharedPreferences.getInstance();
+  final taskList = tasks
+      .map(
+        (task) => {
+          'title': task.title,
+          'description': task.description,
+          'date': task.date.toIso8601String(),
+          'time': '${task.time.hour}:${task.time.minute}',
+        },
+      )
+      .toList();
+
+  await prefs.setString('tasks', jsonEncode(taskList));
+}
+
+class Task {
+  final String title;
+  final String description;
+  final DateTime date;
+  final TimeOfDay time;
+  String? x;
+
+  Task({
+    required this.title,
+    required this.description,
+    required this.date,
+    required this.time,
+    this.x,
+  });
 }
